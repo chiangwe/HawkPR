@@ -43,4 +43,4 @@ Matlab 2018b
 - Each row is demographic features for each county.
 - The total number of rows is the number of counties.
 
-## Examples of training data
+## Examples of training data in './input_data/'
