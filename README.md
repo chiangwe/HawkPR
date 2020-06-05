@@ -11,7 +11,7 @@ Matlab 2018b
 ### Specify shape and scale parameters for Weibull distribution
 #### HawkPR('./input_data/NYT_Dconfirmed.csv', './input_data/GoogleMobi_Dconfirmed.csv', './input_data/Demo_Dconfirmed.csv', 14, 8, 4, 200, 7, 100, './output/mdl.mat', './output/pred.csv')
 
-## Function input
+## Function parameters
 ### HawkPR( InputPath_report, InputPath_mobility, InputPath_demography, Delta, Alpha, Beta, EMitr, DaysPred, SimTimes, OutputPath_mdl, OutputPath_pred)
 | Functiona parameter  | Description |
 | ------------- | ------------- |
@@ -27,4 +27,9 @@ Matlab 2018b
 | OutputPath_mdl  | Output path for the trained model. |
 | OutputPath_pred  | Output path for prediction results.  |
 
+## Input Data format
+### COVID daily report
+#### In csv file format. The header should contain "FIPS,State,County,x2020-02-15, ..."
+#### Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020-02-15.
+#### Each row is a covid daily report for each county.
 
