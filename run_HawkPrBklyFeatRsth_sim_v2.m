@@ -209,7 +209,7 @@ for c = 1:ceil(n_cty*0.5)
         
         explode=1; sim_ct = 0;
         while(explode==1 && sim_ct<sim_max)
-            [times_sim, explode] = Hawkes_Sim_Corona_MEMv2( mus(c), alpha, beta, T_sim, fK0(c,:), T_sim-delta, explode, itr, pop,  tr_in);
+            [times_sim, explode] = Hawkes_Sim_Corona( mus(c), alpha, beta, T_sim, fK0(c,:), T_sim-delta, explode, itr, pop,  tr_in);
             sim_ct = sim_ct +1;
         end
         %

@@ -1,174 +1,109 @@
-function [] = HawkPR( InputPath_report, InputPath_mobility, InputPath_cencus, Delta, Alpha, Beta, OutputPath_mdl, OutputPath_pred)
-
+function [] = HawkPR( InputPath_report, InputPath_mobility, InputPath_demography, Delta, Alpha, Beta, EMitr, DaysPred, SimTimes, OutputPath_mdl, OutputPath_pred)
+warning('off')
 
 %% Read in parameter
-
+EMitr = EMitr;
 if strcmp(Alpha,'') && strcmp(Beta,'')
 	disp('No shape and scale parameter for Weibull distribution provided. Use MLE to infer alpha and beta ... ')
+    alphaScale_in = 0;
+    betaShape_in  = 0;
 else
-	alphaScale_in = str2num(Alpha);
-	betaShape_in  = str2num(Beta);
+	alphaScale_in = Alpha;
+	betaShape_in  = Beta;
 end 
 
 if strcmp(Delta,'') 
         disp('No shift parameter for mobility provided.  It will set to zero ... ')
 	mobiShift_in = 0;
 else
-	mobiShift_in = str2num(Delta);
+	mobiShift_in = Delta;
 end
 
 % Read-in COVID data
+NYT = readtable(InputPath_report,'ReadVariableNames',true);
 
-if strcmpi(type_case, 'confirm')
-        mobi_input = ['../InputSplit/Output/mobility_confirm_gt_10.csv'];
-else
-        mobi_input = ['../InputSplit/Output/mobility_death_gt_1.csv'];
-end
-% Get last day as pred_end day
-last_day = readtable( '../InputSplit/Output/NYT_confirmed_gt_10_offset.csv','ReadVariableNames',true, 'Range', '1:2').Properties.VariableNames(end);
-last_day = last_day{:};
-last_day = strrep(last_day,'_','-');
-
-mobi_out = ['./imputation_temp_dir/mobi_' type_case  '_pd_start_' d_pred_start '_last_day_' last_day '.csv']
-
-%% Save out
 % Read-in mobility
-mob = readtable( mobi_out,'ReadVariableNames',true);
-%delete(mobi_out)
+Mobi = readtable( InputPath_mobility,'ReadVariableNames',true);
 
+% Read-in demographic
+Demo = readtable(InputPath_demography,'ReadVariableNames',true);
+Demo_val = table2array( Demo(:,4:end));
 
-%% Save out
-% Read-in mobility
-mob = readtable( mobi_out,'ReadVariableNames',true);
-%delete(mobi_out)
+% Data pre-processing
+covid = table2array( NYT(:,4:end));
 
-if strcmpi(type_case, 'confirm')
-    NYT = readtable(['../InputSplit/Output/NYT_confirmed_gt_10_offset.csv'],'ReadVariableNames',true);
-    UScensus = readtable(['../InputSplit/Output/US_Census_confirm_gt_10.csv']);
-    %
-    Berkerly = readtable(['../InputSplit/Output/Berkerly_Feat_confirm_gt_10.csv']);
-else
-    NYT = readtable(['../InputSplit/Output/NYT_deaths_gt_1_offset.csv'],'ReadVariableNames',true);
-    UScensus = readtable(['../InputSplit/Output/US_Census_death_gt_1.csv']);
-    %
-    Berkerly = readtable(['../InputSplit/Output/Berkerly_Feat_death_gt_1.csv']);
-end
-
-%%%%%%%%%Pad to shift %%%%%%%%%%%%%%%
-mob_head = mob(:,1:4);
-mob_value = table2array(mob(:,5:end));
+% Pad to shift 
+mob_head = Mobi(:,1:4);
+mob_val = table2array(Mobi(:,5:end));
 
 for pad = 1:mobiShift_in
-    mob_value = [ mean(mob_value(:,1:7),2) mob_value ];
+    mob_val = [ mean(mob_val(:,1:7),2) mob_val ];
 end
 
-mob_value = mob_value(:, 1:size(mob(:,5:end),2));
-mob(:,5:end) = array2table(mob_value);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+% Get Key and Date
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%
-Mobi_Type_list = table2cell(mob(1:6,4));
-Mobi_Date_list = mob.Properties.VariableNames(5:end);
-Mobi_Key_list = table2cell(mob(1:6:end,1:3));
-%
 NYT_Date_list = NYT.Properties.VariableNames(4:end);
 NYT_Key_list = table2cell(NYT(:,1:3));
-%
-UScensus_Type_list = UScensus.Properties.VariableNames(2:end);
-UScensus_Key_list  = table2cell(UScensus(:,1));
-%
-Berkerly_Type_list = Berkerly.Properties.VariableNames(2:end);
-Berkerly_Key_list  = table2cell(Berkerly(:,1));
-%
-mob_val = table2array( mob(:,5:end));
-%
-NYT_val = table2array( NYT(:,4:end));
-NYT_val(isnan(NYT_val)) = 0;
-%
-UScensus_val = table2array( UScensus(:,2:end));
-%
-Berkerly_val = table2array( Berkerly(:,2:end));
-%
-%% Data Pre-Processing
-covid = NYT_val;
 
-% Calculate the difference from accumulative sum of cases
-% The first day is padded with zero (i.e., assusme the first day has no cases)
-covid = [zeros(size(covid,1), 1 ) covid(:,2:end) - covid(:,1:end-1)];
-covid(covid<=0) = 0;
+Mobi_Type_list = table2cell(Mobi(1:6,4));
+Mobi_Date_list = Mobi.Properties.VariableNames(5:end);
+Mobi_Key_list = table2cell(Mobi(1:6:end,1:3));
 
-% Train & Test Split
-% change the name
-d_pred_start = strrep(d_pred_start,'-','_');
-% d_pred_end = strrep(d_pred_end,'-','_');
-%
-n_tr_end = find(strcmpi(NYT.Properties.VariableNames, {d_pred_start} )) - 4;
-covid_tr = covid(:, 1:n_tr_end);
-% covid_te = covid(:, n_tr_end+1:n_tr_end+delta);
-%
-n_tr_end = find(strcmpi(mob.Properties.VariableNames, {d_pred_start} )) - 5;
-mob_tr = mob_val(:, 1:n_tr_end);
-% mob_te = mob_val(:, n_tr_end+1:n_tr_end+delta);
-%
+Demo_Type_list = Demo.Properties.VariableNames(4:end);
+Demo_Key_list  = table2cell(Demo(:,1));
 
 % Get number of counties and number of days
-[n_cty, n_day_tr]=size(covid_tr);
-% [n_cty, n_day_te]=size(covid_te);
-%
+[n_cty, n_day]=size(covid);
+n_mobitype = size(mob_val,1)/n_cty;
+
+disp(['There ' num2str(n_cty) ' counties, ' num2str(n_mobitype) ' types of Mobility indices, and ' num2str(n_day) ' days in the convid reports.' ])
+
+% Train & Test Split
+n_tr = size(covid,2);
+mob_tr = mob_val(:, 1:n_tr);
+mob_te = mob_val(:, n_tr+1:n_tr+DaysPred);
+
+
 % Normalization
-mob_tr_reshape = reshape(mob_tr, 6, size(mob_tr,1)/6 * size(mob_tr,2) ).';
-% mob_te_reshape = reshape(mob_te, 6, size(mob_te,1)/6 * size(mob_te,2) ).';
+mob_tr_reshape = reshape(mob_tr, n_mobitype, size(mob_tr,1)/n_mobitype * size(mob_tr,2) ).';
+mob_te_reshape = reshape(mob_te, n_mobitype, size(mob_te,1)/n_mobitype * size(mob_te,2) ).';
 %
-census_in = UScensus_val(:,end);
-census_tr = repmat(census_in, n_day_tr,1);
-% census_te = repmat(census_in, n_day_te,1);
+Demo_val_in = Demo_val;
+Demo_val_tr = repmat(Demo_val_in, n_tr,1);
+Demo_val_te = repmat(Demo_val_in, DaysPred,1);
+
+covid_tr = covid;
 %
-berkerly_in = Berkerly_val(:,1:end);
-berkerly_tr = repmat(berkerly_in, n_day_tr,1);
-%berkerly_te = repmat(berkerly_in, n_day_te,1);
-%
-Covar_tr = [mob_tr_reshape berkerly_tr];
-%Covar_te = [mob_te_reshape berkerly_te];
+Covar_tr = [mob_tr_reshape Demo_val_tr];
+Covar_te = [mob_te_reshape Demo_val_te];
 %
 Covar_tr_mean = mean(Covar_tr,1);
 Covar_tr_std = std(Covar_tr,1);
 %
 Covar_tr = (Covar_tr-Covar_tr_mean) ./ Covar_tr_std;
-%Covar_te = (Covar_te-Covar_tr_mean) ./ Covar_tr_std;
+Covar_te = (Covar_te-Covar_tr_mean) ./ Covar_tr_std;
 %
 
-% The total number of days
-%T=n_day;%a = 10; b = 4; % hard code shape parameters of Weibull estimates
-
 % Get Variable names
-VarNamesOld = [ Mobi_Type_list; Berkerly_Type_list.'; {['Qprob']}];
+VarNamesOld = [ Mobi_Type_list; Demo_Type_list.'; {['Qprob']}];
 VarNames=[];
 % Rename
 for i = 1:size(VarNamesOld,1)
     newStr = replace( VarNamesOld{i} , ' & ' , '_' );
     newStr = replace( newStr , ' ' , '_' );
+    newStr = regexprep(newStr, '^_', '');
     VarNames=[VarNames; {newStr}];
 end
 
-% Remove Workplace
-Idx_remove = find( strcmp(VarNames,'_Workplace') );
-
-
-Covar_tr = [Covar_tr(:, [(1:Idx_remove-1) (Idx_remove+1:size(Covar_tr,2))] )];
-%Covar_te = [Covar_te(:, [(1:Idx_remove-1) (Idx_remove+1:size(Covar_te,2))])];
-VarNames = [VarNames([(1:Idx_remove-1) (Idx_remove+1:size(VarNames,1))])];
-
-
-
 
 %% Define Parameters
+n_day_tr = n_day;
 T = n_day_tr;
 % Boundary correction, the number of days before the total number of days (n_day)
 dry_correct = 5;
 
 % EM step iterations
-emiter = 200; %Nt=covid(:,2:end);
+emiter = EMitr; %Nt=covid(:,2:end);
 break_diff = 10^-4;
 % Boundary correction: T-dry_correct
 % Mobility has only 6 weeks so we take the less by min(T-dry_correct, size(mobi_in,2) )
@@ -217,7 +152,7 @@ mus_delta = [];   mus_prev = [];
 K0_delta = [];    K0_prev = [];
 theta_delta = []; theta_prev = [];
 for itr = 1:emiter
-    
+    tic
     %% E-step
     % county levelitr
     for c = 1:n_cty
@@ -270,7 +205,7 @@ for itr = 1:emiter
     %% Estimate mu, the background rate
     
     for c = 1:n_cty
-        mus(c) = sum(( diag(p{c}).' .* covid_tr(c,:) )) / (n_day_tr+muReg) ;
+        mus(c) = sum(( diag(p{c}).' .* covid_tr(c,:) )) / (n_day_tr) ;
     end
     
     %% Take all the average
@@ -355,9 +290,59 @@ for itr = 1:emiter
         rule = rule &  all( theta_delta(end-4:end) < break_diff);
 
         if( rule )
+            disp(['Convergence Criterion Meet. Break out EM iteration ...'])
             break;
         end
     end
+    t = toc;
+    disp(['Iterattion ' num2str(itr) ', Elapse time: ' num2str(t)])
 end
-save(out_save,'mus','alpha','beta','K0','mdl','VarNames','alpha_delta','beta_delta','mus_delta','K0_delta','theta_delta')
+if(itr == emiter)
+    disp(['Reach maximun EM iteration.'])
+end
+save(OutputPath_mdl,'mus','alpha','beta','K0','mdl','VarNames','alpha_delta','beta_delta','mus_delta','K0_delta','theta_delta')
+
+% Start Simulation
+load(OutputPath_mdl, 'mus','alpha','beta','K0','mdl','VarNames','alpha_delta','beta_delta','mus_delta','K0_delta','theta_delta')
+
+%% Get K0
+Covar_all = [Covar_tr; Covar_te];
+n_day = n_day_tr+DaysPred;
+T_sim = n_day;
+%% Predict
+[ypred,yci] = predict(mdl,Covar_all);
+fK0 = reshape(ypred, n_cty, n_day);
+
+% Simulation results
+sim = zeros(n_cty, T_sim, SimTimes);
+
+% Loop for simulation
+for c = 1:n_cty
+    tic
+    tr_in = covid_tr(c,:);
+    for itr = 1:SimTimes
+        rng(itr);
+        [times_sim] = Hawkes_Sim_Corona( mus(c), alpha, beta, T_sim, fK0(c,:), T_sim-DaysPred, itr,  tr_in);
+        %
+        [Nt]=discrete_hawkes(times_sim,T_sim);
+        %
+        sim(c,:,itr) = Nt;
+    end
+    t = toc;
+    disp(['Simulation county ' num2str(c) ', Elapse time: ' num2str(t)])
+end
+
+% Formate the output 
+sim_mean = mean(sim,3);
+sim_mean = sim_mean(:, end-DaysPred+1:end);
+
+% Get header 
+Date_pred = datetime(datestr( replace(NYT_Date_list(end),'x','') ,'mm/dd/yyyy'))+days(1:DaysPred);
+Date_pred = replace(string( datestr(Date_pred,'xyyyy/mm/dd')), '/' ,'_');
+
+table_out  = array2table(sim_mean);
+table_out.Properties.VariableNames = Date_pred;
+table_out = [NYT(:,1:3) table_out];
+
+writetable(table_out,OutputPath_pred)
 end
