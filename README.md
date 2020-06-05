@@ -29,7 +29,7 @@ Matlab 2018b
 
 ## Input Data format
 ### COVID daily report
-#### In csv file format. The header should contain "FIPS,State,County,x2020-02-15, ..."
-#### Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020-02-15.
-#### Each row is a covid daily report for each county.
+- In csv file format. The header should contain "FIPS,State,County,x2020-02-15, ..."
+- Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020-02-15.
+- Each row is a covid daily report for each county.
 
