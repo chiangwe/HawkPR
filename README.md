@@ -16,5 +16,12 @@ Matlab 2018b
 InputPath_report: Input path for COVID daily report. <br />
 InputPath_mobility: Input path for mobiblity report. <br />
 InputPath_demography: Input path for spatial demographic features. <br />
-
+Delta: Days lagged for mobility. <br />
+Alpha: Shape parameters for Weibull distribution. Leave it blank string as '' to allow MSE estimation. <br />
+Beta: Scale parameters for Weibull distribution. Leave it blank string as '' to allow MSE estimation. <br />
+EMitr: Maximum iterations for EM algorithm. <br />
+DaysPred: Number of days to make prediction. <br />
+SimTimes: Simulation times for Hawkes processes. Nota that the prediction is the average of number of simulated events among all simulations. <br />
+OutputPath_mdl: Output path for the trained model. <br />
+OutputPath_pred: Output path for prediction results. <br />
 
