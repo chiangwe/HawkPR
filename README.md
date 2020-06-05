@@ -44,3 +44,11 @@ Matlab 2018b
 - The total number of rows is the number of counties.
 
 ## Examples of training data in './input_data/'
+| Functiona parameter  | Description |
+| ------------- | ------------- |
+| NYT_Dconfirmed.csv  | COVID daily confirmed cases collected by The New York Times (counties with confirmed cases >= 10) |
+| NYT_Ddeath.csv  | COVID daily deaths collected by The New York Times (counties with deaths >= 1) |
+| GoogleMobi_Dconfirmed.csv | Google mobility of counties in NYT_Dconfirmed.csv  (Imputated)  |
+| GoogleMobi_Ddeath.csv  | Google mobility of counties in NYT_Ddeath.csv (Imputated)  |
+| Demo_Dconfirmed.csv  | Demographic features of counties in NYT_Dconfirmed.csv   |
+| Demo_Ddeath.csv  | Demographic features of counties in NYT_Ddeath.csv  |
