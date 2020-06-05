@@ -13,8 +13,8 @@ Matlab 2018b
 
 ## Function input
 ### HawkPR( InputPath_report, InputPath_mobility, InputPath_demography, Delta, Alpha, Beta, EMitr, DaysPred, SimTimes, OutputPath_mdl, OutputPath_pred
-InputPath_report: Input path for COVID daily report
-InputPath_mobility: Input path for mobiblity report
-InputPath_demography: Input path for spatial demographic features
+InputPath_report: Input path for COVID daily report. <br />
+InputPath_mobility: Input path for mobiblity report. <br />
+InputPath_demography: Input path for spatial demographic features. <br />
 
 
