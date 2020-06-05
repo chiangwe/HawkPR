@@ -32,4 +32,15 @@ Matlab 2018b
 - In csv file format. The header should contain "FIPS,State,County,x2020-02-15, ..."
 - Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020-02-15.
 - Each row is a covid daily report for each county.
+- The total number of rows is the number of counties.
+### Mobility indices
+- In csv file format. The header should contain "FIPS,State,County,Type,x2020-02-15 ..."
+- Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020-02-15.
+- Each row is a mobility indices for each county for each type of mobility.
+- The total number of rows is the number of counties X number of mobility types
+### Spatial demographic features
+- In csv file format. The header should contain "FIPS,State,County,Feature 1,Feature 2, ..."
+- Each row is demographic features for each county.
+- The total number of rows is the number of counties.
 
+## Examples of training data
