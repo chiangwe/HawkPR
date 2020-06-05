@@ -4,6 +4,11 @@
 
 ## Dependencies 
 Matlab 2018b
+## Functions
+### HawkPR.m: Main functions for EM algorithm.
+### Hawkes_Sim_Corona.m: Simulation of Hawkes processes after estimation.
+### updatep.m: Expectione step.
+### discrete_hawkes.m: discretize the simualtion results.
 
 ## Quick run
 ### Use MLE estimate shape and scale parameters for Weibull distribution
