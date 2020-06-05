@@ -52,3 +52,16 @@ Matlab 2018b
 | GoogleMobi_Ddeath.csv  | Google mobility of counties in NYT_Ddeath.csv (Imputated)  |
 | Demo_Dconfirmed.csv  | Demographic features of counties in NYT_Dconfirmed.csv   |
 | Demo_Ddeath.csv  | Demographic features of counties in NYT_Ddeath.csv  |
+
+## Examples of output data in './output/'
+### mdl.mat
+- model is save in mat files. (load('mdl.mat') can load the models in MATLAB)
+- variable 'mdl' is the summary of Poisson regression model including coefficients
+- variable 'mus' is the background rate (Exogenous infections)
+- variable 'K0' is the estimated reproduction number
+- variable 'alpha, beta' are the esimtated shape and scale parameter for the Weibull distribution 
+### pred.csv
+- In csv file format. The header should contain "FIPS,State,County,x2020_05_21 ..."
+- Date format is in x + 4 digits year + 2 digits month + 2 digits day, i,g., x2020_05_21.
+- Each row is a mobility indices for each county for each type of mobility.
+- There are 'DaysPred' days of prediction starting from the day after the last day in COVID report. 
